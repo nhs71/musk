@@ -1,0 +1,294 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>마크다운 비교 편집기</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">본문으로 이동</a>
+<header class="topbar">
+  <div class="brand">
+    <button id="toggle-outline" class="secondary" aria-expanded="true" aria-controls="sidebar">목차</button>
+    <a href="./" class="brand-title"><span id="doc-title">마크다운 비교 편집기</span> <strong>원문 편집기</strong></a>
+    <span class="brand-sub" id="brand-sub"></span>
+  </div>
+  <nav class="top-actions">
+    <a href="comparisons.html" class="text-link">전체 변경대비표</a>
+    <a href="assets.html" class="button primary">표·그림 도구</a>
+    <button id="library-open" class="secondary">자료실</button>
+    <button id="import-open" class="secondary">가져오기</button>
+    <button id="download" class="secondary">엑셀 내보내기</button>
+    <button id="backup" class="secondary">백업·내보내기</button>
+    <button id="settings-open" class="secondary">설정</button>
+    <button id="account" class="secondary">편집 로그인</button>
+  </nav>
+</header>
+
+<div class="layout">
+  <aside id="sidebar" class="sidebar">
+    <div class="side-head"><h2>목차 <small id="total-count">0</small></h2><button id="create-item" class="secondary">새 항목</button></div>
+    <input id="search" type="search" placeholder="목차와 본문 검색" aria-label="목차와 본문 검색">
+    <select id="part" aria-label="파트"><option value="">전체 파트</option></select>
+    <div class="chips">
+      <button data-filter="all" class="active" aria-pressed="true">전체 <span id="count-all">0</span></button>
+      <button data-filter="changed" aria-pressed="false">변경</button>
+      <button data-filter="unchanged" aria-pressed="false">변경 없음 <span id="count-unchanged">0</span></button>
+      <button data-filter="edited" aria-pressed="false">편집됨 <span id="count-edited">0</span></button>
+    </div>
+    <div class="side-tools"><span id="match-count" class="muted"></span><button id="collapse" class="text-button">모두 접기</button></div>
+    <nav id="outline" class="outline" aria-label="목차"></nav>
+    <div class="side-foot">
+      <button id="trash-button" class="text-button" hidden>삭제한 항목</button>
+      <button id="backup2" class="text-button">JSON 내려받기</button>
+      <p id="basis" class="muted"></p>
+    </div>
+  </aside>
+
+  <main id="main" class="main" tabindex="-1">
+    <p id="error" class="error" role="alert" hidden></p>
+    <p id="loading" class="muted" hidden>불러오는 중…</p>
+
+    <section id="empty-document" class="empty-doc" hidden>
+      <h2>문서를 시작하세요</h2>
+      <p>[가져오기]에서 원문 마크다운(필요하면 수정본 마크다운도)을 올리면 제목(#)별 항목으로 나뉩니다.<br>이전에 내보낸 JSON 백업도 불러올 수 있습니다.</p>
+      <p><button id="import-open2" class="button primary">가져오기</button> <button id="sample" class="secondary">샘플 문서</button></p>
+    </section>
+
+    <div id="document" hidden>
+      <p id="breadcrumb" class="muted"></p>
+      <div class="title-row"><h1 id="title" tabindex="-1"></h1><span id="status-badge" class="badge"></span><span id="comparison-example-link" hidden><a href="#">변경대비표 보기</a></span></div>
+      <p id="location" class="sr-only"></p>
+
+      <section id="structure-intro" hidden>
+        <p id="intro-context" class="muted"></p>
+        <p id="structure-intro-message" class="muted"></p>
+        <button id="create-intro" class="secondary" hidden>도입문 작성</button>
+        <span id="intro-login-hint" class="muted">도입문을 작성하려면 편집 로그인이 필요합니다.</span>
+      </section>
+      <section id="node-children" hidden><h3>하위 목차</h3><ul id="children-list"></ul></section>
+
+      <div id="body-editor">
+        <div class="bar">
+          <div class="seg">
+            <button id="view-mode" class="active" aria-pressed="true">원문 보기</button>
+            <button id="edit-mode" aria-pressed="false">편집하기</button>
+          </div>
+          <div class="bar-right">
+            <span id="save-state" class="save-state"></span>
+            <button id="history-button" class="secondary">저장 이력</button>
+            <button id="save" class="secondary" disabled>변경 저장</button>
+          </div>
+        </div>
+
+        <div id="edit-tools" class="edit-tools" hidden>
+          <div class="tool-group">
+            <button id="insert-reference" class="secondary">참고문헌 삽입</button>
+            <button id="insert-asset" class="secondary">표·그림 불러오기</button>
+          </div>
+          <div class="format-tools" role="toolbar" aria-label="글자 서식">
+            <button data-command="bold" title="굵게"><b>B</b></button>
+            <button data-command="italic" title="기울임"><i>I</i></button>
+            <button data-command="superscript" title="위첨자">x<sup>2</sup></button>
+            <button data-command="subscript" title="아래첨자">x<sub>2</sub></button>
+            <button data-command="insertUnorderedList" title="글머리 기호">• 목록</button>
+            <button data-command="removeFormat">서식 지우기</button>
+          </div>
+          <label class="status-field">변경 상태
+            <select id="edit-status">
+              <option value="changed">내용 변경</option><option value="unchanged">변경 없음</option>
+              <option value="wording_only">문구 정비</option><option value="draft">확인 필요</option><option value="missing">비교 자료 없음</option>
+            </select></label>
+          <label class="title-field">항목 제목 <input id="edit-title"></label>
+          <button id="delete-item" class="danger">항목 삭제</button>
+        </div>
+        <p id="edit-hint" class="muted" hidden>Ctrl+S / ⌘S로 저장합니다. <span data-label="original">원문</span>은 읽기 전용입니다.</p>
+
+        <div class="panes-tabs">
+          <button data-pane="all" class="active" aria-pressed="true">전체 비교</button>
+          <button data-pane="original" aria-pressed="false"><span data-label="original">원문</span></button>
+          <button data-pane="revised" aria-pressed="false"><span data-label="revised">수정 초안</span></button>
+          <button data-pane="tracking" aria-pressed="false">변경추적</button>
+        </div>
+        <p id="source-warning" class="warning" hidden></p>
+        <p class="basis-line"><span id="source-note" class="muted"></span> <span id="source-links"></span></p>
+        <div id="document-assets" class="doc-assets"></div>
+
+        <div id="document-panes" class="panes" data-view="all">
+          <section class="pane" data-pane-name="original">
+            <header><h3><span data-label="original">원문</span> <small>(전체)</small></h3><span id="original-basis" class="muted">읽기 전용</span></header>
+            <div id="original" class="rich" contenteditable="false" aria-readonly="true"></div>
+          </section>
+          <section class="pane" data-pane-name="revised">
+            <header><h3><span data-label="revised">수정 초안</span></h3><span class="muted">전체 본문</span></header>
+            <div id="revised" class="rich" contenteditable="false" aria-readonly="true"></div>
+          </section>
+          <section class="pane" data-pane-name="tracking">
+            <header><h3>변경추적</h3><span id="tracking-state" class="muted"></span></header>
+            <div class="track-tools"><label><input type="checkbox" id="changes-only"> 변경만 보기</label><span class="legend"><span class="lg-del">삭제</span> <span class="lg-add">추가</span></span></div>
+            <div id="tracking" class="rich tracking"></div>
+          </section>
+        </div>
+
+        <section class="notes">
+          <h3>검토 메모·기존 수정사유</h3>
+          <div id="reason" class="rich note" contenteditable="false" aria-readonly="true"></div>
+        </section>
+
+        <section class="comments">
+          <h3>섹션 코멘트 <small id="comment-count" class="muted"></small> <button id="comments-refresh" class="text-button">새로고침</button></h3>
+          <p id="comment-error" class="error" hidden></p>
+          <ul id="comment-list" class="comment-list"></ul>
+          <p id="comment-login-hint" class="muted">코멘트를 보고 남기려면 편집 로그인이 필요합니다.</p>
+          <form id="comment-form" hidden>
+            <input id="comment-author" placeholder="작성자" maxlength="40">
+            <textarea id="comment-body" rows="3" maxlength="5000" placeholder="이 섹션의 검토 의견을 남겨 주세요."></textarea>
+            <div class="row-between"><span id="comment-length" class="muted">0 / 5,000</span><button id="comment-submit" class="secondary" disabled>코멘트 등록</button></div>
+          </form>
+        </section>
+      </div>
+
+      <nav class="pager"><button id="previous" class="secondary">← 이전 항목</button><span id="position" class="muted"></span><button id="next" class="secondary">다음 항목 →</button></nav>
+    </div>
+  </main>
+</div>
+
+<!-- 대화상자 -->
+<dialog id="login-dialog"><form id="login-form" method="dialog">
+  <h3>편집 로그인</h3>
+  <p class="muted" id="login-hint">편집 비밀번호를 입력하세요. 처음 사용하는 경우 입력한 값이 새 비밀번호로 설정됩니다. (정적 사이트의 브라우저 내 편집 잠금이며, 서버 보안은 아닙니다.)</p>
+  <input id="password" type="password" autocomplete="current-password" placeholder="비밀번호">
+  <p id="login-error" class="error" hidden></p>
+  <div class="dlg-actions"><button type="button" class="secondary" data-close="login-dialog">취소</button><button id="login-submit" class="primary">로그인</button></div>
+</form></dialog>
+
+<dialog id="create-dialog"><form id="create-form" method="dialog">
+  <h3>새 항목 생성</h3>
+  <label>파트 <select id="new-part"></select></label>
+  <label>상위 목차(장) <select id="new-chapter"></select></label>
+  <label>제목 <input id="new-title" maxlength="200" required></label>
+  <p id="create-error" class="error" hidden></p>
+  <div class="dlg-actions"><button type="button" class="secondary" data-close="create-dialog">취소</button><button id="create-submit" class="primary">만들기</button></div>
+</form></dialog>
+
+<dialog id="history-dialog" class="wide"><div>
+  <div class="dlg-head"><h3>저장 이력</h3><button class="secondary" data-close="history-dialog">닫기</button></div>
+  <div class="history-grid">
+    <div id="history-list" class="history-list"></div>
+    <div id="revision-preview" hidden>
+      <p id="revision-label"><strong></strong></p>
+      <div class="rev-cols">
+        <section><h4><span data-label="original">원문</span></h4><div id="revision-original" class="rich"></div></section>
+        <section><h4><span data-label="revised">수정 초안</span></h4><div id="revision-revised" class="rich"></div></section>
+        <section><h4>검토 메모</h4><div id="revision-reason" class="rich"></div></section>
+      </div>
+      <button id="restore" class="primary" disabled>이 버전으로 복원</button>
+    </div>
+  </div>
+</div></dialog>
+
+<dialog id="trash-dialog"><div>
+  <div class="dlg-head"><h3>삭제한 항목</h3><button class="secondary" data-close="trash-dialog">닫기</button></div>
+  <div id="trash-list"></div>
+</div></dialog>
+
+<dialog id="reference-dialog" class="wide"><div>
+  <div class="dlg-head"><h3>참고문헌 삽입</h3><button class="secondary" data-close="reference-dialog">닫기</button></div>
+  <p id="reference-target" class="muted"></p>
+  <div class="ref-bar">
+    <select id="reference-edition"><option value="original">원문 참고문헌</option><option value="revised">수정 초안 참고문헌</option></select>
+    <input id="reference-search" type="search" placeholder="번호 또는 내용 검색">
+    <button id="reference-create-toggle" class="secondary" aria-expanded="false">새 참고문헌 등록</button>
+  </div>
+  <p id="reference-basis" class="muted"></p>
+  <form id="reference-create-form" hidden>
+    <textarea id="reference-new-text" rows="3" placeholder="저자. 제목. 출처. 연도."></textarea>
+    <p id="reference-create-error" class="error" hidden></p>
+    <div class="dlg-actions"><button type="button" id="reference-create-cancel" class="secondary">취소</button><button id="reference-create-submit" class="primary">등록하고 선택</button></div>
+  </form>
+  <p id="reference-created" class="notice" hidden></p>
+  <p id="reference-error" class="error" hidden></p>
+  <p id="reference-count" class="muted"></p>
+  <div id="reference-list" class="ref-list"></div>
+  <div class="dlg-actions"><span id="reference-selection" class="muted"></span><button id="reference-clear" class="secondary">선택 해제</button><button id="reference-submit" class="primary" disabled>본문에 삽입</button></div>
+</div></dialog>
+
+<dialog id="asset-picker" class="wide"><div>
+  <div class="dlg-head"><h3>표·그림 불러오기</h3><button id="asset-picker-close" class="secondary">닫기</button></div>
+  <p id="asset-picker-summary" class="muted"></p>
+  <p id="asset-picker-error" class="error" hidden></p>
+  <div class="picker-grid">
+    <div>
+      <input id="asset-picker-search" type="search" placeholder="제목·번호 검색">
+      <select id="asset-picker-edition"><option value="">전체</option><option value="6">6판 개정본</option><option value="5">5판 기준본</option></select>
+      <button id="asset-picker-refresh" class="text-button">새로고침</button>
+      <div id="asset-picker-list" class="asset-list"></div>
+    </div>
+    <div>
+      <label>버전 <select id="asset-picker-version" disabled></select></label>
+      <div id="asset-preview" class="rich asset-preview"></div>
+      <button id="asset-insert" class="primary" disabled>본문에 삽입</button>
+    </div>
+  </div>
+</div></dialog>
+
+<dialog id="library-dialog" class="wide"><div>
+  <div class="dlg-head"><h3>자료실 <small id="library-count" class="muted"></small></h3><div><button id="library-refresh" class="secondary">새로고침</button> <button id="library-close" class="secondary">닫기</button></div></div>
+  <p class="muted">이 브라우저에 보관하는 공유 파일 목록입니다(파일당 최대 100MB). GitHub 설정이 있으면 [GitHub에 올리기]로 저장소 files/ 폴더에 올려 다른 사람과 공유할 수 있습니다.</p>
+  <form id="library-form">
+    <input id="library-file" type="file" required>
+    <input id="library-description" placeholder="설명(선택)" maxlength="200">
+    <button id="library-submit" class="primary">올리기</button>
+    <span id="library-progress" class="muted"></span>
+  </form>
+  <p id="library-error" class="error" hidden></p>
+  <div id="library-list"></div>
+</div></dialog>
+
+<dialog id="import-dialog" class="wide"><form id="import-form" method="dialog">
+  <h3>가져오기</h3>
+  <p class="muted">마크다운은 제목(#)을 기준으로 항목이 나뉩니다. 1단계 제목은 파트, 2단계는 장, 그 아래는 절이 됩니다. 수정본을 함께 올리면 같은 제목끼리 맞춰 비교합니다.</p>
+  <label><span data-label="original">원문</span> 마크다운 (.md)<input id="import-orig" type="file" accept=".md,.markdown,.txt"></label>
+  <label><span data-label="revised">수정 초안</span> 마크다운 (선택)<input id="import-rev" type="file" accept=".md,.markdown,.txt"></label>
+  <hr>
+  <label>또는 백업 JSON 복원<input id="import-json" type="file" accept=".json,application/json"></label>
+  <p id="import-error" class="error" hidden></p>
+  <div class="dlg-actions"><button type="button" class="secondary" data-close="import-dialog">취소</button><button id="import-submit" class="primary">가져오기</button></div>
+</form></dialog>
+
+<dialog id="export-dialog"><div>
+  <div class="dlg-head"><h3>백업·내보내기</h3><button class="secondary" data-close="export-dialog">닫기</button></div>
+  <div class="stack">
+    <button id="x-json" class="primary">전체 JSON 백업 (이력·코멘트·자료 포함)</button>
+    <button id="x-md-rev" class="secondary">수정 초안 전체 (.md)</button>
+    <button id="x-md-orig" class="secondary">원문 전체 (.md)</button>
+    <button id="x-xlsx" class="secondary">전체 비교표 (.xlsx)</button>
+  </div>
+</div></dialog>
+
+<dialog id="settings-dialog" class="wide"><div>
+  <div class="dlg-head"><h3>설정</h3><button class="secondary" data-close="settings-dialog">닫기</button></div>
+  <label>문서 이름 <input id="set-title"></label>
+  <div class="two"><label>원문 이름 <input id="set-lab-o"></label><label>수정본 이름 <input id="set-lab-r"></label></div>
+  <h4>참고문헌 목록 <small class="muted">(한 줄에 하나, 앞의 [번호]는 무시하고 순서대로 번호가 붙습니다)</small></h4>
+  <div class="two"><label>원문 참고문헌<textarea id="set-ref-o" rows="6"></textarea></label><label>수정본 참고문헌<textarea id="set-ref-r" rows="6"></textarea></label></div>
+  <h4>GitHub 저장소 동기화</h4>
+  <p class="muted">문서 전체(JSON)를 저장소에 커밋하거나 불러옵니다. 토큰은 이 브라우저에만 저장됩니다(Fine-grained 토큰, Contents: Read and write).</p>
+  <div class="two"><label>저장소 (user/repo)<input id="gh-repo" placeholder="user/repo"></label><label>브랜치<input id="gh-branch" placeholder="main"></label></div>
+  <div class="two"><label>파일 경로<input id="gh-path" placeholder="data/document.json"></label><label>토큰<input id="gh-token" type="password"></label></div>
+  <p id="settings-msg" class="notice" hidden></p>
+  <div class="dlg-actions"><button id="gh-pull" class="secondary">GitHub에서 불러오기</button><button id="gh-push" class="secondary">GitHub에 커밋 저장</button><button id="set-save" class="primary">설정 저장</button></div>
+  <h4>편집 비밀번호 변경</h4>
+  <div class="two"><input id="set-pw" type="password" placeholder="새 비밀번호"><button id="set-pw-save" class="secondary">변경</button></div>
+</div></dialog>
+
+<div id="toast" class="toast" role="status" hidden></div>
+<script src="store.js"></script>
+<script src="comments.js"></script>
+<script src="citations.js"></script>
+<script src="library.js"></script>
+<script src="asset-picker.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

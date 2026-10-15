@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>전체 변경대비표</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><a href="./" class="button primary">← 편집기</a><strong id="page-title">전체 변경대비표</strong></div>
+  <nav class="top-actions">
+    <input id="q" type="search" placeholder="제목·본문 검색" style="width:220px">
+    <select id="f" style="width:auto"><option value="">전체</option><option value="changed">변경 있음</option><option value="same">변경 없음</option></select>
+    <button id="export-html" class="secondary">HTML로 저장</button>
+    <button id="print" class="secondary">인쇄</button>
+  </nav>
+</header>
+<main class="page">
+  <p id="summary" class="muted"></p>
+  <div id="list"></div>
+</main>
+<script src="store.js"></script>
+<script src="comparisons.js"></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>표·그림 도구</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><a href="./" class="button primary">← 편집기</a><strong>표·그림 도구</strong><span class="muted">보관함에 만든 자료를 편집기의 [표·그림 불러오기]로 본문에 넣습니다.</span></div>
+  <nav class="top-actions"><span id="who" class="muted"></span><button id="login" class="secondary">편집 로그인</button></nav>
+</header>
+<main class="page">
+  <p id="msg" class="notice" hidden></p>
+  <div class="picker-grid" style="grid-template-columns:320px 1fr">
+    <section>
+      <div class="side-head"><h2>보관함 <small id="count" class="muted"></small></h2><button id="new" class="secondary">새 자료</button></div>
+      <input id="aq" type="search" placeholder="제목·번호 검색" style="margin:8px 0">
+      <select id="ak"><option value="">전체 종류</option><option value="table">표</option><option value="image">그림</option><option value="figure">그림·도식</option><option value="form">서식</option><option value="formula">수식</option></select>
+      <div id="alist" class="asset-list"></div>
+    </section>
+    <section id="editor-box">
+      <h2 id="etitle">새 자료</h2>
+      <div class="two">
+        <label>종류 <select id="kind"><option value="table">표</option><option value="image">그림</option><option value="figure">그림·도식</option><option value="form">서식</option><option value="formula">수식</option></select></label>
+        <label>제목 <input id="title" maxlength="200"></label>
+      </div>
+      <div class="two">
+        <label>판 <select id="edition"><option value="6">6판 개정본</option><option value="5">5판 기준본</option></select></label>
+        <label>번호 <input id="number" placeholder="예: 표 3"></label>
+      </div>
+      <div id="table-tools" class="stack">
+        <div class="two"><label>행 <input id="rows" type="number" min="1" max="60" value="3"></label><label>열 <input id="cols" type="number" min="1" max="12" value="3"></label></div>
+        <label>엑셀/CSV 붙여넣기(탭 또는 쉼표 구분) <textarea id="paste" rows="3" placeholder="셀을 복사해 붙여 넣으면 표로 바뀝니다."></textarea></label>
+        <div><button id="build" class="secondary">표 만들기</button></div>
+      </div>
+      <div id="image-tools" hidden><label>이미지 파일 <input id="imgfile" type="file" accept="image/*"></label></div>
+      <label>내용 (직접 편집할 수 있습니다)</label>
+      <div id="content" class="rich" contenteditable="true" style="border:1px solid var(--line);border-radius:6px;min-height:200px;padding:10px"></div>
+      <div class="dlg-actions"><button id="delete" class="danger" hidden>삭제</button><button id="save" class="primary">저장 (새 버전)</button></div>
+      <h3 id="vtitle" hidden>버전</h3><div id="versions"></div>
+    </section>
+  </div>
+</main>
+<script src="store.js"></script>
+<script src="assets.js"></script>
+</body>
+</html>

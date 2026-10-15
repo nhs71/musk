@@ -1,0 +1,41 @@
+원본 사이트 분석 결과 (https://edit.transfusion.online/comparison-editor/)
+============================================================================
+분석 방법: 디버그 모드 크롬(CDP)에서 로드된 스크립트 5개를 캡처해 읽음(app.js 38KB, citations.js 18KB, asset-picker.js 9KB,
+comments.js 5KB, library.js 7KB). 서버 코드와 HTML/CSS 원본은 받지 못했고(서버가 비브라우저 요청을 차단), 화면은 스크린샷과 스크립트의 요소 ID로 재구성했습니다.
+
+1. 구조
+- 서버 기반 앱: 클라이언트가 /comparison-editor/api/... 를 호출. 변경추적(diff)·HTML 정리·내보내기는 서버가 수행.
+- 페이지: index(편집기), comparisons.html(전체 변경대비표), comparison-<ID>.html(항목별 변경대비표), assets.html(표·그림 도구)
+- 본문은 contentEditable 서식 편집기. 필드 3개: original(원문, 읽기 전용) / revised(수정본) / reason(검토 메모). 내용은 HTML.
+- 상태값: changed(내용 변경) / unchanged(변경 없음) / wording_only(문구 정비만) / missing(비교 자료 없음) / draft(확인 필요)
+- 목차(outline): 파트 > 장 > 절 트리. 노드 종류 part/chapter/section/introduction. 하위가 있는 파트/장은 본문 없이 "도입문"을 따로 만들 수 있음.
+- 로그인: 공용 비밀번호(세션). 비로그인은 열람 전용. 편집·코멘트·자료실·삭제한 항목은 로그인 필요.
+
+2. API (원본) → 이 프로그램의 대응
+- GET sections, GET/PUT sections/:id, POST sections, POST outline/:node/body   → store.js api() 라우터(IndexedDB)
+- POST sections/:id/delete, GET trash, POST sections/:id/restore                → 삭제=버전 이력 + 복원
+- GET sections/:id/history, GET revision/:v                                     → 저장 이력(버전별 전체 스냅샷)
+- GET/POST sections/:id/track                                                   → track(): 블록 LCS + 단어 diff(클라이언트)
+- GET/POST sections/:id/comments, .../comments/:cid/delete                      → 코멘트(멱등 등록: 클라이언트 생성 ID)
+- GET/POST references                                                           → 판별 참고문헌 목록/등록
+- GET assets, assets/:id/details, assets/:id/versions/:v                        → 표·그림 보관함(자료별 버전)
+- /api/files (업로드·목록·다운로드·삭제, 100MB)                                  → 자료실(IndexedDB) + GitHub files/ 업로드
+- login / logout / session                                                      → 브라우저 편집 잠금(SHA-256 해시)
+- export.xlsx / export.json                                                     → SheetJS(xlsx) / JSON 백업
+
+3. 동작 규칙(스크립트에서 확인한 것)
+- 저장: version 번호를 함께 보내 충돌(409) 감지, 성공 시 목차 갱신. 미저장 수정이 있으면 이동/닫기/로그아웃 시 확인.
+- 원문/수정본을 고치면 상태가 unchanged/wording_only 일 때 자동으로 changed 로 전환.
+- 편집됨 = 현재 버전 > 기준 버전 이거나 새로 만든 항목. 필터: 전체/변경(변경 없음·문구 정비 제외)/변경 없음/편집됨.
+- 변경추적: 수정본을 편집 중이면 저장 전 내용을 POST 로 보내 450ms 후 즉시 비교. 결과 카운트: 추가·삭제·수정.
+- 서식 도구: execCommand(bold, italic, superscript, subscript, insertUnorderedList, removeFormat). 붙여넣기는 text/plain 만 허용.
+- 참고문헌: 본문 텍스트의 [1], [2-4], [1, 3] 패턴을 DOM 수정 없이 Range 로 찾아 hover/click 시 말풍선. 판(5판/6판)별 목록을 따로 사용.
+- 표·그림: 보관함 자료를 .managed-asset(data-asset-id, data-asset-version, contenteditable=false)로 삽입, 선택 후 다른 버전으로 교체.
+- 코멘트: 최대 5,000자, 작성자 입력, 등록 전 초안은 항목별 보관, 삭제 가능.
+- 서버가 하는 HTML 정리(sanitize)는 이 프로그램에서 store.js sanitize()로 대체(허용 태그/속성 목록).
+
+4. 이 프로그램과 다른 점
+- 서버 DB 대신 브라우저 IndexedDB + GitHub 파일. 동시편집/실시간 코멘트 공유는 없음.
+- 원본의 5판·6판 고정 용어는 [설정]에서 바꿀 수 있는 "원문/수정 초안" 이름으로 일반화.
+- 입력은 마크다운(.md)을 제목별로 분할해서 가져오며, 내보내기도 마크다운을 지원.
+- 원본의 GitHub 출처 링크/개정 사유 자동 입력(source_urls, source_note)은 데이터가 없어 기본 문구로 대체.
